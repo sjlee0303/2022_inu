@@ -1,0 +1,107 @@
+//led code
+#include <Adafruit_NeoPixel.h>
+#ifdef __AVR__
+ #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
+#endif
+
+// Which pin on the Arduino is connected to the NeoPixels?
+// On a Trinket or Gemma we suggest changing this to 1:
+#define LED_PIN     8
+
+// How many NeoPixels are attached to the Arduino?
+#define LED_COUNT  60
+
+// NeoPixel brightness, 0 (min) to 255 (max)
+#define BRIGHTNESS 50 // Set BRIGHTNESS to about 1/5 (max = 255)
+
+// Declare our NeoPixel strip object:
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRBW + NEO_KHZ800);
+
+//=====
+
+#include <SoftwareSerial.h>
+SoftwareSerial BTSerial(2, 3); // RX | TX
+
+#define relay1 4
+#define relay2 5
+#define relay3 6
+#define relay4 7
+
+char data = '0';
+//int a=0;
+
+void setup()
+{
+  Serial.begin(9600);
+
+  // HC-06 default baud rate is 9600
+  BTSerial.begin(9600);
+
+  pinMode(relay1, OUTPUT);
+  pinMode(relay2, OUTPUT);
+  pinMode(relay3, OUTPUT);
+  pinMode(relay4, OUTPUT);
+
+  //led code
+#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+  clock_prescale_set(clock_div_1);
+#endif
+  // END of Trinket-specific code.
+
+  strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
+  strip.show();            // Turn OFF all pixels ASAP
+  strip.setBrightness(BRIGHTNESS);
+}
+
+void loop()
+{
+
+  // Keep reading from HC-06 and send to Arduino Serial Monitor
+  if (BTSerial.available()) { //블루투스에서 넘어온 데이터가 있다면
+    
+      data = BTSerial.read();
+    
+
+    if (data == 97) {
+      Serial.println("ok");
+      digitalWrite(relay1, LOW); // 릴레이 on
+      digitalWrite(relay2, LOW);
+      digitalWrite(relay3, LOW);
+      digitalWrite(relay4, LOW);
+
+      //if(a == 0){
+        //led on
+        colorWipe(strip.Color(255,   0,   0)     , 1); // Red
+        colorWipe(strip.Color(  0, 255,   0)     , 1); // Green
+        colorWipe(strip.Color(  0,   0, 255)     , 1); // Blue
+        colorWipe(strip.Color(  0,   0,   0, 255), 1); // True white (not RGB white)
+
+        //a = 1;
+     // }
+      
+    }
+    else if (data == 98) {
+      Serial.println("hi");
+      digitalWrite(relay1, HIGH); // 릴레이 off
+      digitalWrite(relay2, HIGH);
+      digitalWrite(relay3, HIGH);
+      digitalWrite(relay4, HIGH);
+
+      //if(a == 1){
+        //led off
+        colorWipe(strip.Color(0,   0,   0)     , 1); 
+
+        //a = 0;
+      //}
+    }
+  }
+
+}
+
+void colorWipe(uint32_t color, int wait) {
+  for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
+    strip.setPixelColor(i, color);         //  Set pixel's color (in RAM)
+    strip.show();                          //  Update strip to match
+    delay(wait);                           //  Pause for a moment
+  }
+}
